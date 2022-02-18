@@ -169,6 +169,12 @@ var processUmask = function () {
   return process.umask ? process.umask() : 0
 }
 
+const ensureNoDotsInPath = (path) => {
+  if(path.contains('..')){
+    throw new Error('Invalid path, cannot contain /../')
+  }
+}
+
 exports.extract = function (cwd, opts) {
   if (!cwd) cwd = '.'
   if (!opts) opts = {}
@@ -261,6 +267,9 @@ exports.extract = function (cwd, opts) {
     var onlink = function () {
       if (win32) return next() // skip links on win for now before it can be tested
       xfs.unlink(name, function () {
+        ensureNoDotsInPath(cwd);
+        ensureNoDotsInPath(header.linkname);
+
         var srcpath = path.resolve(cwd, header.linkname)
 
         if (srcpath.indexOf('..') == -1) {
@@ -272,6 +281,8 @@ exports.extract = function (cwd, opts) {
 
             stat(err)
           })
+        }else{
+          throw new Error('Invalid path');
         }
       })
     }
